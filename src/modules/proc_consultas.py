@@ -12,7 +12,6 @@ from nltk.corpus import stopwords
 import logging as log
 import csv
 import re
-import os
 
 class QueryProcessor:
     def __init__(self, config_file):
@@ -29,10 +28,6 @@ class QueryProcessor:
         Read configuration file and extract relevant information.
         """
         log.info("Reading configuration file...")
-        if not os.path.exists(self.config_file):
-            log.error(f"Configuration file does not exist: {self.config_file}")
-            raise FileNotFoundError(f"Configuration file not found: {self.config_file}")
-        
         try:
             with open(self.config_file, 'r') as file:
                 lines = file.readlines()
@@ -43,7 +38,10 @@ class QueryProcessor:
                         self.output_queries_file = line.strip().split("=")[1]
                     elif line.startswith("ESPERADOS="):
                         self.output_expected_file = line.strip().split("=")[1]
-        except IOError as e:
+        except FileNotFoundError:
+            log.error(f"Configuration file not found: {self.config_file}")
+            raise
+        except OSError as e:
             log.error(f"Error reading configuration file: {e}")
             raise
     
@@ -52,10 +50,6 @@ class QueryProcessor:
         Read queries from XML file and store relevant information.
         """
         log.info("Reading queries...")
-        if not os.path.exists(self.queries_file):
-            log.error(f"Queries file does not exist: {self.queries_file}")
-            raise FileNotFoundError(f"Queries file not found: {self.queries_file}")
-        
         try:
             tree = ET.parse(self.queries_file)
             root = tree.getroot()
@@ -65,17 +59,15 @@ class QueryProcessor:
                 count += 1
                 query_number = int(query.find('QueryNumber').text)
                 query_text = query.find('QueryText').text
-                
                 records = query.find('Records')
+
                 if records is not None:
                     for item in records.findall('Item'):
                         doc_number = int(item.text)
                         score_str = item.get('score')
                         # Calcula nota final do documento como a soma de todas as notas recebidas
                         doc_score = sum(map(lambda x: int(x) > 0, score_str))
-                        
                         self.expected.append((query_number, doc_number, doc_score))
-
                 self.queries.append((query_number, query_text)) 
 
             log.info("Finished reading queries. Total queries read: %d", count)
@@ -83,7 +75,10 @@ class QueryProcessor:
         except ET.ParseError as e:
             log.error(f"Failed to parse XML file: {e}")
             raise
-        except IOError as e:
+        except FileNotFoundError:
+            log.error(f"Queries file not found: {self.queries_file}")
+            raise
+        except OSError as e:
             log.error(f"Error opening XML file: {e}")
             raise
     
@@ -105,7 +100,6 @@ class QueryProcessor:
         Write queries and expected results to CSV files.
         """
         log.info("Writing output files...")
-
         try:
             with open(self.output_queries_file, 'w', newline='', encoding='utf-8') as queries_file, \
              open(self.output_expected_file, 'w', newline='', encoding='utf-8') as expected_file:
@@ -122,7 +116,7 @@ class QueryProcessor:
 
             log.info("Finished writing outputfiles.")
 
-        except IOError as e:
+        except OSError as e:
             log.error(f"Failed to write output file: {e}")
             raise
 
