@@ -7,11 +7,9 @@ Data: 04/04/2024
 """
 
 import xml.etree.ElementTree as ET
-from unicodedata import normalize
-from nltk.corpus import stopwords
+from .utils.preprocessing import normalize_text
 import logging as log
 import csv
-import re
 
 class QueryProcessor:
     def __init__(self, config_file):
@@ -19,7 +17,6 @@ class QueryProcessor:
         self.queries_file = None
         self.output_queries_file = None
         self.output_expected_file = None
-        self.stop_words = set(stopwords.words('english'))
         self.queries = []
         self.expected = []
     
@@ -89,7 +86,7 @@ class QueryProcessor:
         log.info("Processing queries...")
         processed_queries = []
         for query_number, query_text in self.queries:
-            processed_text = self.__preprocess_text(query_text)
+            processed_text = normalize_text(query_text)
             processed_queries.append((query_number, processed_text))
         
         self.queries = processed_queries       
@@ -114,24 +111,11 @@ class QueryProcessor:
                 for expected_data in self.expected:
                     expected_writer.writerow(expected_data)
 
-            log.info("Finished writing outputfiles.")
+            log.info("Finished writing output files.")
 
         except OSError as e:
             log.error(f"Failed to write output file: {e}")
             raise
-
-    def __preprocess_text(self, text):
-        """
-        Preprocess text to remove accents, stopwords, non-alphanumeric characters, and convert it to uppercase.
-        """
-        # Remover acentuação
-        text = normalize('NFKD', text).encode('ASCII', 'ignore').decode('utf-8')
-        # Converter para maiúsculas
-        text = text.upper()
-        # Remover caracteres especiais e stopwords
-        words = re.findall(r'\b\w+\b', text)
-        filtered_words = [word for word in words if word.lower() not in self.stop_words]
-        return ' '.join(filtered_words)
 
     def run(self):
         """
