@@ -125,15 +125,12 @@ class QueryProcessor:
         Preprocess text to remove accents, stopwords, non-alphanumeric characters, and convert it to uppercase.
         """
         # Remover acentuação
-        text = normalize('NFKD', text).encode('ASCII', 'ignore').decode('ASCII')
-
+        text = normalize('NFKD', text).encode('ASCII', 'ignore').decode('utf-8')
         # Converter para maiúsculas
         text = text.upper()
-
         # Remover caracteres especiais e stopwords
         words = re.findall(r'\b\w+\b', text)
         filtered_words = [word for word in words if word.lower() not in self.stop_words]
-
         return ' '.join(filtered_words)
 
     def run(self):
