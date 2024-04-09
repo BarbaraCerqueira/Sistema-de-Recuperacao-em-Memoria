@@ -117,6 +117,11 @@ class InvertedListGenerator:
         """
         Main method to run the inverted list generator.
         """
+        # Redefinindo ou inicializando os atributos para garantir um estado limpo
+        self.input_files = []
+        self.documents = []
+        self.inverted_index = {}
+        
         log.info("Starting Inverted List Generator...")
         self.__read_configuration()
         self.__read_data()

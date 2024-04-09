@@ -121,6 +121,10 @@ class QueryProcessor:
         """
         Main method to run the query processor.
         """
+        # Redefinindo ou inicializando os atributos para garantir um estado limpo
+        self.queries = []
+        self.expected = []
+
         log.info("Starting Query Processor...")
         self.__read_configuration()
         self.__read_data()
