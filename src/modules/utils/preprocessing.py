@@ -14,6 +14,8 @@ def normalize_text(text):
     text = text.upper()
     # Remover caracteres especiais e números
     text = re.sub(r"[^a-zA-Z]+", " ", text)
+    # Remover palavras com apenas 1 letra
+    text = re.sub(r'\b\w{1}\b', '', text)
     # Remover stopwords
     words = re.findall(r'\b\w+\b', text)
     filtered_words = [word for word in words if word.lower() not in stop_words]
