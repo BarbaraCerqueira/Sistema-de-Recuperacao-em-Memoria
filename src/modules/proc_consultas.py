@@ -125,7 +125,7 @@ class QueryProcessor:
         self.queries = []
         self.expected = []
 
-        log.info("Starting Query Processor...")
+        log.info("Query Processor started.")
         self.__read_configuration()
         self.__read_data()
         self.__process_data()

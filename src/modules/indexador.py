@@ -10,7 +10,6 @@ Data: 08/04/2024
 import logging as log
 import math
 import csv
-import re
 from collections import defaultdict
 
 class Indexer:
@@ -104,10 +103,10 @@ class Indexer:
         log.info("Writing tf-idf scores to file...")
         try:
             with open(self.output_file, 'w', newline='', encoding='utf-8') as file:
-                csv_writer = csv.writer(file, delimiter=';')
+                writer = csv.writer(file, delimiter=';')
                 for doc_id, terms_scores in self.tf_idf_scores.items():
                     for term, score in terms_scores.items():
-                        csv_writer.writerow([doc_id, term, score])
+                        writer.writerow([doc_id, term, score])
             log.info("Finished writing tf-idf scores.")
 
         except OSError as e:
@@ -124,7 +123,7 @@ class Indexer:
         self.tf_idf_scores = defaultdict(dict)
         self.total_documents = 0
 
-        log.info("Starting Indexer...")
+        log.info("Indexer started.")
         self.__read_configuration()
         self.__read_data()
         self.__process_data()

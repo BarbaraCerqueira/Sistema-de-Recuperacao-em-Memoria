@@ -122,7 +122,7 @@ class InvertedListGenerator:
         self.documents = []
         self.inverted_index = {}
 
-        log.info("Starting Inverted List Generator...")
+        log.info("Inverted List Generator started.")
         self.__read_configuration()
         self.__read_data()
         self.__process_data()
