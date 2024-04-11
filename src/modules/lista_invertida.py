@@ -79,11 +79,11 @@ class InvertedListGenerator:
         """
         Process data from documents and generate inverted index.
         """
-        log.info("Processing documents...")
+        log.info("Processing documents data...")
         for record, abstract in self.documents:
             processed_abstract = normalize_text(abstract)
             self.__build_inverted_index(record, processed_abstract)
-        log.info("Finished processing documents.")
+        log.info("Finished processing documents data.")
 
     def __write_data(self):
         """
@@ -121,7 +121,7 @@ class InvertedListGenerator:
         self.input_files = []
         self.documents = []
         self.inverted_index = {}
-        
+
         log.info("Starting Inverted List Generator...")
         self.__read_configuration()
         self.__read_data()

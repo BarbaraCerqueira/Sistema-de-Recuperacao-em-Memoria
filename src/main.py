@@ -10,7 +10,7 @@ setup_logging
 if __name__ == "__main__":
     query_processor = QueryProcessor(config_file="./config/pc.cfg")
     inverted_list_generator = InvertedListGenerator(config_file="./config/gli.cfg")
-    indexer = Indexer(config_file="index.cfg")
+    indexer = Indexer(config_file="./config/index.cfg")
 
     # query_processor.run()
     # inverted_list_generator.run()

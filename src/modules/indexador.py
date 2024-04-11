@@ -18,11 +18,12 @@ class Indexer:
         self.config_file = config_file
         self.input_file = None
         self.output_file = None
-        self.document_terms = defaultdict(dict)
-        self.term_document_frequency = defaultdict(int)
+        self.document_terms = defaultdict(dict)  # Guarda o número de vezes que um termo aparece em cada documento
+        self.document_frequency = defaultdict(int)  # Guarda o número de documentos em que cada termo é encontrado
+        self.tf_idf_scores = defaultdict(dict)
         self.total_documents = 0
 
-    def read_configuration(self):
+    def __read_configuration(self):
         """
         Read the configuration file to get input and output file names.
         """
@@ -44,24 +45,33 @@ class Indexer:
     
     def __read_data(self):
         """
-        Read inverted index from CSV.
+        Read inverted index from CSV and store data.
         """
         log.info("Reading inverted index from CSV file...")
         try:
             count = 0
+            document_set = set()  # Guarda os ids de todos os documentos distintos, evitando repetição
+
             with open(self.input_file, 'r', encoding='utf-8') as file:
                 csv_reader = csv.reader(file, delimiter=';')
                 for row in csv_reader:
                     count += 1
                     term = row[0]
-                    document_ids = eval(row[1])  # Convert string representation of list to actual list
+                    document_ids = eval(row[1])  # Lista de IDs dos documentos onde o termo é encontrado
+
+                    # Calculo do total de documentos distintos em que o termo aparece
+                    self.document_frequency[term] = len(set(document_ids))
+
+                    # Calculo da frequência do termo em cada documento
                     for doc_id in document_ids:
-                        self.total_documents += 1
+                        document_set.add(doc_id)
+                        # Incrementa frequência do termo no documento
                         if term not in self.document_terms[doc_id]:
                             self.document_terms[doc_id][term] = 1
                         else:
                             self.document_terms[doc_id][term] += 1
-                        self.term_document_frequency[term] += 1
+
+            self.total_documents = len(document_set)
 
             log.info("Finished reading inverted index. Total rows read: %d", count)
 
@@ -72,41 +82,22 @@ class Indexer:
             log.error(f"Error opening CSV file: {e}")
             raise
 
-    def process_documents(self):
+    def __process_data(self):
         """
-        Process documents to create the term-document matrix and calculate tf-idf scores.
+        Process retrieved data to create the term-document matrix and calculate tf-idf scores.
         """
-        try:
-            with open(self.input_file, 'r', encoding='utf-8') as file:
-                csv_reader = csv.reader(file, delimiter=';')
-                for row in csv_reader:
-                    term = row[0]
-                    document_ids = eval(row[1])  # Convert string representation of list to actual list
-                    for doc_id in document_ids:
-                        self.total_documents += 1
-                        if term not in self.document_terms[doc_id]:
-                            self.document_terms[doc_id][term] = 1
-                        else:
-                            self.document_terms[doc_id][term] += 1
-                        self.term_document_frequency[term] += 1
-        except Exception as e:
-            log.error(f"Error processing documents: {e}")
-            raise
-
-    def calculate_tf_idf(self):
-        """
-        Calculate the TF-IDF score for each term in each document.
-        """
-        tf_idf_scores = defaultdict(dict)
+        log.info("Processing term/document data...")
         for doc_id, terms in self.document_terms.items():
-            doc_term_count = sum(terms.values())
-            for term, count in terms.items():
-                tf = count / float(doc_term_count)
-                idf = math.log(self.total_documents / (1 + self.term_document_frequency[term]))
-                tf_idf_scores[doc_id][term] = tf * idf
-        return tf_idf_scores
+            max_term_freq = max(terms.values())
 
-    def write_data(self, tf_idf_scores):
+            for term, freq in terms.items():
+                tf = freq / float(max_term_freq)
+                idf = math.log(self.total_documents / self.document_frequency[term])
+                self.tf_idf_scores[doc_id][term] = tf * idf
+
+        log.info("Finished processing term/document data.")
+
+    def __write_data(self):
         """
         Write the TF-IDF scores to the output file.
         """
@@ -114,7 +105,7 @@ class Indexer:
         try:
             with open(self.output_file, 'w', newline='', encoding='utf-8') as file:
                 csv_writer = csv.writer(file, delimiter=';')
-                for doc_id, terms_scores in tf_idf_scores.items():
+                for doc_id, terms_scores in self.tf_idf_scores.items():
                     for term, score in terms_scores.items():
                         csv_writer.writerow([doc_id, term, score])
             log.info("Finished writing tf-idf scores.")
@@ -129,12 +120,13 @@ class Indexer:
         """
         # Redefinindo ou inicializando os atributos para garantir um estado limpo
         self.document_terms = defaultdict(dict)
-        self.term_document_frequency = defaultdict(int)
+        self.document_frequency = defaultdict(int)
+        self.tf_idf_scores = defaultdict(dict)
         self.total_documents = 0
 
         log.info("Starting Indexer...")
-        self.read_configuration()
-        self.process_documents()
-        tf_idf_scores = self.calculate_tf_idf()
-        self.write_output(tf_idf_scores)
+        self.__read_configuration()
+        self.__read_data()
+        self.__process_data()
+        self.__write_data()
         log.info("Indexer completed.")
