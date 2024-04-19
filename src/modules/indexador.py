@@ -17,9 +17,9 @@ class Indexer:
         self.config_file = config_file
         self.input_file = None
         self.output_file = None
-        self.document_terms = defaultdict(dict)  # Guarda o número de vezes que um termo aparece em cada documento
+        self.tf_idf_scores = defaultdict(lambda: defaultdict(float))
+        self.document_terms = defaultdict(lambda: defaultdict(int))  # Guarda a frequência dos termos em cada documento
         self.document_frequency = defaultdict(int)  # Guarda o número de documentos em que cada termo é encontrado
-        self.tf_idf_scores = defaultdict(dict)
         self.total_documents = 0
 
     def __read_configuration(self):
@@ -65,10 +65,7 @@ class Indexer:
                     for doc_id in document_ids:
                         document_set.add(doc_id)
                         # Incrementa frequência do termo no documento
-                        if term not in self.document_terms[doc_id]:
-                            self.document_terms[doc_id][term] = 1
-                        else:
-                            self.document_terms[doc_id][term] += 1
+                        self.document_terms[doc_id][term] += 1
 
             self.total_documents = len(document_set)
 
@@ -118,9 +115,9 @@ class Indexer:
         Main method to run the indexer.
         """
         # Redefinindo ou inicializando os atributos para garantir um estado limpo
-        self.document_terms = defaultdict(dict)
+        self.tf_idf_scores = defaultdict(lambda: defaultdict(float))
+        self.document_terms = defaultdict(lambda: defaultdict(int))
         self.document_frequency = defaultdict(int)
-        self.tf_idf_scores = defaultdict(dict)
         self.total_documents = 0
 
         log.info("Indexer started.")
