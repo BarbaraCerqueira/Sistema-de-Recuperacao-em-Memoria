@@ -1,0 +1,5 @@
+O modelo tf-idf é salvo num arquivo CSV localizado em /src/result/tfidf_scores.csv
+O arquivo possui 3 colunas, descritas a seguir:
+- A primeira coluna é o id do documento
+- A segunda coluna é a palavra contida naquele documento
+- A terceira coluna é a pontuação tf-idf daquela palavra naquele documento
