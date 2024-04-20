@@ -3,13 +3,13 @@ from unicodedata import normalize
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 
-stop_words = set(stopwords.words('english'))
-stemmer = PorterStemmer()
-
 def normalize_text(text):
     """
     Preprocess text to remove accents, stopwords, non-alphabetic characters, apply stemming and convert it to uppercase.
     """
+    stop_words = set(stopwords.words('english'))
+    stemmer = PorterStemmer()
+    
     # Remover acentuação
     text = normalize('NFKD', text).encode('ASCII', 'ignore').decode('utf-8')
     # Converter para maiúsculas

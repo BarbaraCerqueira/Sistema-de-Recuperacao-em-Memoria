@@ -1,8 +1,8 @@
+from modules.utils import setup_nltk, setup_logging  # Configurações de ambiente
 from modules.proc_consultas import QueryProcessor
 from modules.lista_invertida import InvertedListGenerator
 from modules.indexador import Indexer
 from modules.buscador import SearchEngine
-from modules.utils import setup_nltk, setup_logging  # Configurações de ambiente
 
 if __name__ == "__main__":
     modules = [
