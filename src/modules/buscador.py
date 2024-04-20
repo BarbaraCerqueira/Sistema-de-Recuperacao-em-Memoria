@@ -1,7 +1,7 @@
 """
 Módulo: buscador.py
-Descrição: Este módulo implementa um buscador, responsável por obter os resultados de um conjunto de buscas 
-           a partir de um modelo vetorial.
+Descrição: Este módulo implementa um buscador, responsável por obter os resultados de um conjunto de consultas 
+           a partir de um modelo vetorial, procurando os documentos mais relevantes a cada consulta. 
 Autor: Bárbara Cerqueira
 Data: 11/04/2024
 """
@@ -10,7 +10,6 @@ from collections import defaultdict
 import logging as log
 import numpy as np
 import csv
-
 
 class SearchEngine:
     def __init__(self, config_file):
