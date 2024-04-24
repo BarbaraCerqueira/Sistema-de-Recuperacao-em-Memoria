@@ -105,7 +105,6 @@ class SearchEngine:
 
         log.info("Calculating similarity...")
         for query_id, query_vector in query_vectors.items():
-            log.info("Searching for most similar documents to Query nº %d", query_id)
             scores = defaultdict(float)  # Guarda a pontuação de similaridade de cada documento em relação a uma query
 
             for doc_id, doc_vector in document_vectors.items():
