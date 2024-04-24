@@ -14,6 +14,7 @@ import csv
 class QueryProcessor:
     def __init__(self, config_file):
         self.config_file = config_file
+        self.stemmer = False
         self.queries_file = None
         self.output_queries_file = None
         self.output_expected_file = None
@@ -29,7 +30,9 @@ class QueryProcessor:
             with open(self.config_file, 'r') as file:
                 lines = file.readlines()
                 for line in lines:
-                    if line.startswith("LEIA="):
+                    if line.startswith("STEMMER"):
+                        self.stemmer = line.strip().split("=")[1].lower() == "on"
+                    elif line.startswith("LEIA="):
                         self.queries_file = line.strip().split("=")[1]
                     elif line.startswith("CONSULTAS="):
                         self.output_queries_file = line.strip().split("=")[1]
@@ -86,7 +89,7 @@ class QueryProcessor:
         log.info("Processing queries...")
         processed_queries = []
         for query_number, query_text in self.queries:
-            processed_text = normalize_text(query_text)
+            processed_text = normalize_text(query_text, stemmer=self.stemmer)
             processed_queries.append((query_number, processed_text))
         
         self.queries = processed_queries       
