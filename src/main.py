@@ -3,6 +3,7 @@ from modules.proc_consultas import QueryProcessor
 from modules.lista_invertida import InvertedListGenerator
 from modules.indexador import Indexer
 from modules.buscador import SearchEngine
+from modules.avaliacao import Evaluator
 import logging as log
 
 def in_memory_retrieval(stemmer=False):
@@ -19,8 +20,20 @@ def in_memory_retrieval(stemmer=False):
         module.run()
 
 if __name__ == "__main__":
-    log.info("Running In Memory Retrieval using PORTER STEMMER...")
-    in_memory_retrieval(stemmer=True)
+    # log.info("Running In Memory Retrieval using PORTER STEMMER...")
+    # in_memory_retrieval(stemmer=True)
 
-    log.info("Running In Memory Retrieval using NO STEMMER...")
-    in_memory_retrieval(stemmer=False)
+    # log.info("Running In Memory Retrieval using NO STEMMER...")
+    # in_memory_retrieval(stemmer=False)
+
+    log.info("Evaluating stemmed results...")
+    Evaluator(results_file = './result/resultados_stemmer.csv', 
+              expected_file = './result/esperados.csv', 
+              output_dir = './avalia/', 
+              suffix = 'stemmer').run()
+
+    log.info("Evaluating not stemmed results...")
+    Evaluator(results_file = './result/resultados_nostemmer.csv', 
+              expected_file = './result/esperados.csv', 
+              output_dir = './avalia/',
+              suffix = 'nostemmer').run()

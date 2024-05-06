@@ -16,18 +16,23 @@ Descrição: Este módulo implementa uma classe cuja função é avaliar o siste
             9. Normalized Discounted Cumulative Gain
 """
 
+from nltk.metrics import precision, recall
 from collections import defaultdict
-import logging as log
 from operator import itemgetter
-import numpy as np
-import csv
 import matplotlib.pyplot as plt
+import logging as log
+import numpy as np
+import pandas as pd
+import csv
+import os
+
 
 class Evaluator:
-    def __init__(self, results_file, expected_file, suffix = None):
+    def __init__(self, results_file, expected_file, output_dir = '', suffix = None):
         self.results_file = results_file
         self.expected_file = expected_file
-        self.suffix = suffix  # Terminação nos nomes dos arquivos gerados e também identificador para algumas métricas
+        self.output_dir = output_dir
+        self.suffix = suffix  # Terminação nos nomes dos arquivos gerados
         self.results = defaultdict(list)  # Para cada query, guarda uma lista de resultados (cada resultado é um dicionário com ranking, documento, pontuação de tf-idf)
         self.expected = defaultdict(list)  # Para cada query, guarda uma lista de resultados esperados (cada resultado é um dicionário com id do documento e número de votos)
 
@@ -75,45 +80,68 @@ class Evaluator:
 
     def __plot_11_point_precision_recall_curve(self):
         """
-        Plot the 11 point precision recall curve for the data available. 
+        Plot the 11 point precision recall curve and save it to CSV and PDF (graph) files.
         """
-        precisions = []
-        recalls = []
+        try:
+            log.info("Plotting 11-point precision recall curve...")
+            recall_levels = np.linspace(0, 1, num=11)  # 11 níveis de recall igualmente espaçados
 
-        for query, query_results in self.results.items():
-            expected_docs = set([res['doc'] for res in self.expected[query]])
-            relevant_docs = 0
-            total_retrieved_docs = 0
-            relevant_and_retrieved_docs = 0
+            # Calculando a precisão por nivel de recall para cada query
+            interpolated_precision_values = defaultdict(list)
+            for query in self.expected:
+                relevant_docs = [doc['doc'] for doc in self.expected[query]]
+                retrieved_docs = [result['doc'] for result in self.results[query]]
+                total_relevant_docs = len(relevant_docs)
+                relevant_retrieved = 0
+                precision_values = []
+                recall_values = []
 
-            for i, result in enumerate(query_results):
-                total_retrieved_docs += 1
-                if result['doc'] in expected_docs:
-                    relevant_docs += 1
-                    relevant_and_retrieved_docs += 1
+                for i, doc in enumerate(retrieved_docs):
+                    if doc in relevant_docs:
+                        relevant_retrieved += 1
+                    precision_values.append(relevant_retrieved / (i + 1))
+                    recall_values.append(relevant_retrieved / total_relevant_docs)
 
-                precision = relevant_and_retrieved_docs / total_retrieved_docs
-                recall = relevant_and_retrieved_docs / len(expected_docs)
+                # Calculo da precisão interpolada para cada nível
+                interpolated_precision = []
+                for recall_level in recall_levels:
+                    max_precision = max([precision_values[i] for i, recall_value in enumerate(recall_values) if recall_value >= recall_level], default=0)
+                    interpolated_precision.append(max_precision)
 
-                # Se o recall atual for um dos 11 pontos pré-definidos, adicionamos precisão e recall à lista
-                if round(recall, 1) == len(precisions) / 10:
-                    precisions.append(precision)
-                    recalls.append(recall)
+                interpolated_precision_values[query] = interpolated_precision  # Lista ordenada com a precisão em cada recall level, de 0.0 a 1.0
 
-        # Plotando o gráfico
-        plt.figure(figsize=(8, 6))
-        plt.plot(recalls, precisions, marker='o')
-        plt.title('11-point Precision-Recall Curve')
-        plt.xlabel('Recall')
-        plt.ylabel('Precision')
-        plt.grid(True)
-        plt.xticks(np.arange(0, 1.1, 0.1))
-        plt.yticks(np.arange(0, 1.1, 0.1))
-        plt.gca().set_aspect('equal', adjustable='box')
-        plt.show()
+            # Calculo da precisão média por nível de recall considerando todas as queries
+            average_precisions = []
+            for i, level in enumerate(recall_levels):
+                precisions_at_level_i = [interpolated_precision_values[query][i] for query in self.expected]
+                average_precisions.append(sum(precisions_at_level_i) / len(precisions_at_level_i))
+
+            # Plot the 11-point interpolated precision-recall curve
+            plt.plot(recall_levels, average_precisions, marker='o')
+            plt.xlabel('Recall')
+            plt.ylabel('Precision')
+            plt.title('11-Point Interpolated Precision-Recall Curve')
+            plt.grid(True)
+            plt.tight_layout()
+
+            # Save the plot
+            output_filename = os.path.join(self.output_dir, f'11pontos-{self.suffix}.pdf')
+            plt.savefig(output_filename)
+            plt.close()
+            log.info(f"Graph was saved in path: {output_filename}")
+
+        except OSError as e:
+            log.error(f"Failed to find output path or save file: {e}")
 
     def run(self):
+        # Redefinindo ou inicializando os atributos para garantir um estado limpo
+        self.results = defaultdict(list)
+        self.expected = defaultdict(list)
+
         log.info("Evaluator started.")
+        # Cria o diretório de saída se não existir
+        os.makedirs(self.output_dir, exist_ok=True)
+
         self.__read_data()
         self.__plot_11_point_precision_recall_curve()
         log.info("Evaluator completed.")
