@@ -28,13 +28,14 @@ import os
 
 
 class Evaluator:
-    def __init__(self, results_file, expected_file, output_dir = '', suffix = None):
+    def __init__(self, results_file, expected_file, output_dir = '', identifier = None):
         self.results_file = results_file
         self.expected_file = expected_file
         self.output_dir = output_dir
-        self.suffix = suffix  # Terminação nos nomes dos arquivos gerados
+        self.identifier = identifier  # Identificador da coleção de dados encontrados, será usada na terminação nos nomes dos arquivos gerados
         self.results = defaultdict(list)  # Para cada query, guarda uma lista de resultados (cada resultado é um dicionário com ranking, documento, pontuação de tf-idf)
         self.expected = defaultdict(list)  # Para cada query, guarda uma lista de resultados esperados (cada resultado é um dicionário com id do documento e número de votos)
+        self.limit = 10  # Limite de rank para métricas em que tal decisão seja importante
 
     def __read_data(self):
         """
@@ -116,19 +117,71 @@ class Evaluator:
                 precisions_at_level_i = [interpolated_precision_values[query][i] for query in self.expected]
                 average_precisions.append(sum(precisions_at_level_i) / len(precisions_at_level_i))
 
-            # Plot the 11-point interpolated precision-recall curve
-            plt.plot(recall_levels, average_precisions, marker='o')
+            # Plota a curva de precisão-recall
+            plt.plot(recall_levels, average_precisions, marker='o', label=self.identifier)
             plt.xlabel('Recall')
             plt.ylabel('Precision')
             plt.title('11-Point Interpolated Precision-Recall Curve')
             plt.grid(True)
             plt.tight_layout()
 
-            # Save the plot
-            output_filename = os.path.join(self.output_dir, f'11pontos-{self.suffix}.pdf')
-            plt.savefig(output_filename)
+            # Salva o gráfico em um PDF
+            output_file_path = os.path.join(self.output_dir, f'11pontos-{self.identifier}.pdf')
+            plt.savefig(output_file_path)
             plt.close()
-            log.info(f"Graph was saved in path: {output_filename}")
+            log.info(f"Graph was saved in path: {output_file_path}")
+
+        except OSError as e:
+            log.error(f"Failed to find output path or save file: {e}")
+
+    def __f1_score(self):
+        """
+        Calculate the average F1 score for all queries using the top 10 retrieved and 
+        expected documents for each query and save the result in a CSV file.
+        """
+        try:
+            log.info("Calculating F1 Score...")
+            f1_scores = []
+
+            for query in self.expected:
+                relevant_docs = [doc['doc'] for doc in self.expected[query][:10]]  # Top 10 relevant docs
+                retrieved_docs = [result['doc'] for result in self.results[query] if result['rank'] <= 10]  # Top 10 relevant docs
+
+                relevant_retrieved = [doc for doc in retrieved_docs if doc in relevant_docs]
+
+                # Calcular precisão e recall
+                if len(retrieved_docs) == 0:
+                    precision = 0
+                else:
+                    precision = len(relevant_retrieved) / len(retrieved_docs)
+
+                if len(relevant_docs) == 0:
+                    recall = 0
+                else:
+                    recall = len(relevant_retrieved) / len(relevant_docs)
+
+                # Calculo de F1
+                if (precision + recall) == 0:
+                    f1 = 0
+                else:
+                    f1 = 2 * (precision * recall) / (precision + recall)
+
+                f1_scores.append(f1)
+
+            # Média dos F1 scores
+            if len(f1_scores) == 0:
+                average_f1 = 0
+            else:
+                average_f1 = sum(f1_scores) / len(f1_scores)
+
+            # Salva o F1 score médio em um arquivo CSV
+            output_file_path = os.path.join(self.output_dir, f'f1-{self.identifier}.csv')
+            with open(output_file_path, 'w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow(['Average_F1_Score'])
+                writer.writerow([average_f1])
+
+            log.info(f"F1 score saved in path: {output_file_path}")
 
         except OSError as e:
             log.error(f"Failed to find output path or save file: {e}")
@@ -144,4 +197,5 @@ class Evaluator:
 
         self.__read_data()
         self.__plot_11_point_precision_recall_curve()
+        self.__f1_score()
         log.info("Evaluator completed.")

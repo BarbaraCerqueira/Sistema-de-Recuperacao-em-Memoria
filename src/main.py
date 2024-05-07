@@ -30,10 +30,10 @@ if __name__ == "__main__":
     Evaluator(results_file = './result/resultados_stemmer.csv', 
               expected_file = './result/esperados.csv', 
               output_dir = './avalia/', 
-              suffix = 'stemmer').run()
+              identifier = 'stemmer').run()
 
     log.info("Evaluating not stemmed results...")
     Evaluator(results_file = './result/resultados_nostemmer.csv', 
               expected_file = './result/esperados.csv', 
               output_dir = './avalia/',
-              suffix = 'nostemmer').run()
+              identifier = 'nostemmer').run()
