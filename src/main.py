@@ -26,13 +26,13 @@ if __name__ == "__main__":
     # log.info("Running In Memory Retrieval using NO STEMMER...")
     # in_memory_retrieval(stemmer=False)
 
-    log.info("Evaluating stemmed results...")
+    log.info("Evaluating STEMMED results...")
     Evaluator(results_file = './result/resultados_stemmer.csv', 
               expected_file = './result/esperados.csv', 
               output_dir = './avalia/', 
               identifier = 'stemmer').run()
 
-    log.info("Evaluating not stemmed results...")
+    log.info("Evaluating NOT STEMMED results...")
     Evaluator(results_file = './result/resultados_nostemmer.csv', 
               expected_file = './result/esperados.csv', 
               output_dir = './avalia/',

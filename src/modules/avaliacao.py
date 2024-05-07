@@ -144,21 +144,14 @@ class Evaluator:
             f1_scores = []
 
             for query in self.expected:
-                relevant_docs = [doc['doc'] for doc in self.expected[query][:10]]  # Top 10 relevant docs
-                retrieved_docs = [result['doc'] for result in self.results[query] if result['rank'] <= 10]  # Top 10 relevant docs
+                relevant_docs = [doc['doc'] for doc in self.expected[query][:10]]  # Top 10 docs relevantes (mais votos)
+                retrieved_docs = [result['doc'] for result in self.results[query] if result['rank'] <= 10]  # Top 10 docs obtidos
 
                 relevant_retrieved = [doc for doc in retrieved_docs if doc in relevant_docs]
 
                 # Calcular precisão e recall
-                if len(retrieved_docs) == 0:
-                    precision = 0
-                else:
-                    precision = len(relevant_retrieved) / len(retrieved_docs)
-
-                if len(relevant_docs) == 0:
-                    recall = 0
-                else:
-                    recall = len(relevant_retrieved) / len(relevant_docs)
+                precision = len(relevant_retrieved) / len(retrieved_docs) if len(retrieved_docs) != 0 else 0
+                recall = len(relevant_retrieved) / len(relevant_docs) if len(relevant_docs) != 0 else 0
 
                 # Calculo de F1
                 if (precision + recall) == 0:
@@ -169,19 +162,45 @@ class Evaluator:
                 f1_scores.append(f1)
 
             # Média dos F1 scores
-            if len(f1_scores) == 0:
-                average_f1 = 0
-            else:
-                average_f1 = sum(f1_scores) / len(f1_scores)
+            average_f1 = sum(f1_scores) / len(f1_scores) if len(f1_scores) != 0 else 0
 
             # Salva o F1 score médio em um arquivo CSV
             output_file_path = os.path.join(self.output_dir, f'f1-{self.identifier}.csv')
             with open(output_file_path, 'w', newline='') as file:
                 writer = csv.writer(file)
-                writer.writerow(['Average_F1_Score'])
+                writer.writerow(['F1_Score'])
                 writer.writerow([average_f1])
+                log.info(f"F1 score saved in path: {output_file_path}")
 
-            log.info(f"F1 score saved in path: {output_file_path}")
+        except OSError as e:
+            log.error(f"Failed to find output path or save file: {e}")
+
+    def __precision_at_k(self, k):
+        """
+        Calculates precision for the top k retrieved documents for each query.
+        """
+        try:
+            log.info(f"Calculating Precision@{k}...")
+            precision_values = []
+
+            for query in self.expected:
+                relevant_docs = [doc['doc'] for doc in self.expected[query]]
+                retrieved_docs = [result['doc'] for result in self.results[query]][:k]  # Pegar os top k documentos recuperados
+                relevant_retrieved = len(set(retrieved_docs) & set(relevant_docs))
+
+                precision = relevant_retrieved / k if k != 0 else 0
+                precision_values.append(precision)
+
+            # Media da Precisão de todas as queries
+            avg_precision = sum(precision_values) / len(precision_values)
+
+            # Salva o score de Precision em um arquivo CSV
+            output_file_path = os.path.join(self.output_dir, f'precision@{k}-{self.identifier}.csv')
+            with open(output_file_path, 'w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow([f'Precision@{k}'])
+                writer.writerow([avg_precision])
+                log.info(f"Precision@{k} saved in path: {output_file_path}")
 
         except OSError as e:
             log.error(f"Failed to find output path or save file: {e}")
@@ -198,4 +217,7 @@ class Evaluator:
         self.__read_data()
         self.__plot_11_point_precision_recall_curve()
         self.__f1_score()
+        self.__precision_at_k(k=5)
+        self.__precision_at_k(k=10)
         log.info("Evaluator completed.")
+        
