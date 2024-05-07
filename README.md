@@ -14,7 +14,7 @@ Para configurar o ambiente necessário para executar este sistema, siga os passo
 1. Clone o repositório:
    ```bash
    git clone https://github.com/BarbaraCerqueira/Sistema-de-Recuperacao-em-Memoria.git
-   cd '.\Sistema-de-Recuperacao-em-Memoria\'
+   cd '.\Sistema-de-Recuperacao-em-Memoria\src'
    ```
 
 2. Instale as dependências:
