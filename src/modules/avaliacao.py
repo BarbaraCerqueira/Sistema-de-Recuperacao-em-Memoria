@@ -211,11 +211,18 @@ class Evaluator:
         """
         try:
             log.info("Plotting R-Precision Histogram...")
-            r_precisions = [self.__calculate_r_precision(query) for query in self.expected]
-
-            plt.hist(r_precisions, bins=np.arange(0, 1.1, 0.1), edgecolor='black', alpha=0.7)
-            plt.xlabel('R-Precision')
-            plt.ylabel('Frequency')
+            r_precisions = []
+            for query in self.expected:
+                relevant_docs = self.expected[query]  # R = relevant_docs
+                retrieved_docs = self.results[query][:len(relevant_docs)]
+                relevant_retrieved = [doc for doc in retrieved_docs if doc in relevant_docs]
+                r_precision = len(relevant_retrieved) / len(relevant_docs)
+                r_precisions.append(r_precision)
+            
+            # Desenhando o histograma
+            plt.hist(np.arange(0, len(r_precisions), 1), bins=r_precisions, edgecolor='black', alpha=0.7)
+            plt.xlabel('Query ID')
+            plt.ylabel('R-Precision')
             plt.title('R-Precision Histogram')
             plt.xticks(np.arange(0, 1.1, 0.1))
             plt.grid(True)
@@ -229,16 +236,6 @@ class Evaluator:
 
         except OSError as e:
             log.error(f"Failed to find output path or save file: {e}")
-
-    def __calculate_r_precision(self, query):
-        """
-        Calculate R-Precision for a given query.
-        """
-        relevant_docs = self.expected[query]
-        retrieved_docs = self.results[query][:len(relevant_docs)]  # Consider only the top N retrieved documents
-        relevant_retrieved = [doc for doc in retrieved_docs if doc in relevant_docs]
-        r_precision = len(relevant_retrieved) / len(relevant_docs)
-        return r_precision
 
     def run(self):
         # Redefinindo ou inicializando os atributos para garantir um estado limpo
