@@ -46,7 +46,7 @@ class Evaluator:
             with open(self.results_file, 'r') as file:
                 reader = csv.reader(file, delimiter=';')
                 for row in reader:
-                    query = row[0]
+                    query = int(row[0])
                     result = eval(row[1])
                     # Resultado está no formato [rank, doc_id, similarity_score]
                     self.results[query].append({
@@ -60,7 +60,7 @@ class Evaluator:
                 reader = csv.reader(file, delimiter=';')
                 header = next(reader)  # Pular o header
                 for row in reader:
-                    query = row[0]
+                    query = int(row[0])
                     doc_id = row[1]
                     votes = int(row[2])
                     self.expected[query].append({
@@ -211,21 +211,22 @@ class Evaluator:
         """
         try:
             log.info("Plotting R-Precision Histogram...")
+            queries = list(self.expected.keys())
             r_precisions = []
-            for query in self.expected:
-                relevant_docs = self.expected[query]  # R = relevant_docs
-                retrieved_docs = self.results[query][:len(relevant_docs)]
+
+            for query in queries:
+                relevant_docs = [doc['doc'] for doc in self.expected[query]]
+                retrieved_docs = [result['doc'] for result in self.results[query]][:len(relevant_docs)]  # R = len(relevant_docs)
                 relevant_retrieved = [doc for doc in retrieved_docs if doc in relevant_docs]
                 r_precision = len(relevant_retrieved) / len(relevant_docs)
                 r_precisions.append(r_precision)
             
-            # Desenhando o histograma
-            plt.hist(np.arange(0, len(r_precisions), 1), bins=r_precisions, edgecolor='black', alpha=0.7)
-            plt.xlabel('Query ID')
+            # Plotando o histograma
+            plt.bar(queries, r_precisions)
+            plt.xlabel('Query')
             plt.ylabel('R-Precision')
             plt.title('R-Precision Histogram')
-            plt.xticks(np.arange(0, 1.1, 0.1))
-            plt.grid(True)
+            plt.xticks(rotation=45, ha='right')
             plt.tight_layout()
 
             # Salva o histograma em um PDF
