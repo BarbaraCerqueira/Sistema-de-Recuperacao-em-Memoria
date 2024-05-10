@@ -244,10 +244,10 @@ class Evaluator:
         """
         try:
             log.info("Calculating Mean Average Precision (MAP)...")
-            queries_avg_precisions = []
+            avg_precisions = []
 
             for query in self.expected:
-                relevant_docs = {doc['doc'] for doc in self.expected[query]}
+                relevant_docs = [doc['doc'] for doc in self.expected[query]]
                 retrieved_docs = [result['doc'] for result in self.results[query] if result['rank'] <= self.limit]  # Considera apenas os top 10 docs
 
                 precision_values = []
@@ -259,11 +259,11 @@ class Evaluator:
                     precision_values.append(relevant_retrieved / (i + 1))
 
                 # Precisao média para a query
-                average_precision = sum(precision_values) / len(precision_values) if precision_values else 0.0
-                queries_avg_precisions.append(average_precision)
+                avg_precision = sum(precision_values) / len(precision_values) if precision_values else 0.0
+                avg_precisions.append(avg_precision)
 
             # Média das médias de precisão de todas as queries
-            map_score = sum(queries_avg_precisions) / len(queries_avg_precisions) if queries_avg_precisions else 0.0
+            map_score = sum(avg_precisions) / len(avg_precisions) if avg_precisions else 0.0
 
             # Salva o score de MAP em um arquivo CSV
             output_file_path = os.path.join(self.output_dir, f'map-{self.identifier}.csv')
@@ -276,6 +276,41 @@ class Evaluator:
         except OSError as e:
             log.error(f"Failed to find output path or save file: {e}")
 
+    def __mrr(self):
+        """
+        Calculate Mean Reciprocal Rank for all queries .
+        """
+        try:
+            log.info("Calculating Mean Reciprocal Rank (MRR)...")
+            reciprocal_ranks = []
+
+            for query in self.expected:
+                relevant_docs = [doc['doc'] for doc in self.expected[query]]
+                retrieved_docs = [result['doc'] for result in self.results[query] if result['rank'] <= self.limit]  # Considera apenas os top 10 docs
+                reciprocal_rank = 0.0  # default, permanecerá se nenhum doc relevante for encontrado
+
+                # Obter o inverso da posição do primeiro documento relevante recuperado
+                for i, doc in enumerate(retrieved_docs):
+                    if doc in relevant_docs:
+                        reciprocal_rank = 1 / (i + 1)     
+                        break
+
+                reciprocal_ranks.append(reciprocal_rank)
+
+            # Média dos reciprocal ranks de todas as queries
+            mrr_score = sum(reciprocal_ranks) / len(reciprocal_ranks) if reciprocal_ranks else 0.0
+
+            # Salva o score de MRR em um arquivo CSV
+            output_file_path = os.path.join(self.output_dir, f'mrr-{self.identifier}.csv')
+            with open(output_file_path, 'w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow([f'MRR'])
+                writer.writerow([mrr_score])
+                log.info(f"Mean Reciprocal Rank saved in path: {output_file_path}")
+
+        except OSError as e:
+            log.error(f"Failed to find output path or save file: {e}")
+
     def run(self):
         # Redefinindo ou inicializando os atributos para garantir um estado limpo
         self.results = defaultdict(list)
@@ -283,6 +318,7 @@ class Evaluator:
 
         log.info("Evaluator started.")
         os.makedirs(self.output_dir, exist_ok=True)  # Cria o diretório de saída se não existir
+        
         self.__read_data()
         self.__plot_11_point_precision_recall_curve()
         self.__f1_score()
@@ -290,4 +326,5 @@ class Evaluator:
         self.__precision_at_k(k=10)
         self.__plot_r_precision_histogram()
         self.__map()
+        self.__mrr()
         log.info("Evaluator completed.")
