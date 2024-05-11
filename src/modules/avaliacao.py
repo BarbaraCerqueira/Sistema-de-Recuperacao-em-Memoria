@@ -3,8 +3,8 @@ Módulo: avaliacao.py
 Data: 24/04/2024
 Autor: Bárbara Cerqueira
 Descrição: Este módulo implementa uma classe cuja função é avaliar o sistema de recuperação em memória baseado
-           no modelo vetorial. Ela irá ler o arquivo de resultados gerado pelo modelo e comparar com os resultados
-           esperados, gerando uma série de medidas e diagramas em formato CSV e gráfico, os quais estão listados a seguir:
+           no modelo vetorial. Ela irá ler os arquivo sde resultados gerado pelo modelo e analisar os resultados,
+           gerando uma série de medidas e diagramas em formato CSV e gráfico, os quais estão listados a seguir:
             1. Gráfico de 11 pontos de precisão e recall
             2. F1
             3. Precision@5
