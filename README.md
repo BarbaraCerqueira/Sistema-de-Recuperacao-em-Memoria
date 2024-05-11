@@ -34,7 +34,7 @@ Para configurar o ambiente necessário para executar este sistema, siga os passo
 - `src/modules/utils`: Contém alguns utilitários, dentre eles arquivos de configuração de ambiente e uma função de preprocessamento de texto.
 
 ## Como Executar
-Para rodar o sistema completo, execute o seguinte comando na pasta 'src' do projeto:
+Para rodar o sistema completo, execute o seguinte comando na pasta `src` do projeto:
 
 ```bash
 python main.py
@@ -58,15 +58,15 @@ Este módulo implementa um buscador, responsável por obter os resultados de um 
 
 ### Avaliação
 Esse módulo implementa um avaliador, responsável por avaliar o sistema de recuperação em memória baseado no modelo vetorial. Ela irá ler os arquivos de resultados gerados e analisá-los, gerando uma série de medidas e gráficos para medir a qualidade do modelo, os quais estão listados a seguir:
-   1. Gráfico de 11 pontos de precisão e recall
-   2. F1
-   3. Precision@5
-   4. Precision@10
-   5. Histograma de R-Precision (comparativo)
-   6. MAP
-   7. MRR
-   8. Discounted Cumulative Gain (médio)
-   9. Normalized Discounted Cumulative Gain
+   - Gráfico de 11 pontos de precisão e recall
+   - F1
+   - Precision@5
+   - Precision@10
+   - Histograma de R-Precision (comparativo)
+   - MAP
+   - MRR
+   - Discounted Cumulative Gain (médio)
+   - Normalized Discounted Cumulative Gain
 
 ## Utilitários
 
