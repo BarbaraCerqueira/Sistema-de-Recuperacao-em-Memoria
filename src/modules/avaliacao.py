@@ -77,7 +77,7 @@ class Evaluator:
 
     def __plot_11_point_precision_recall_curve(self):
         """
-        Plot the 11 point precision recall curve and save it to CSV and PDF (graph) files.
+        Plot the 11 point precision recall curve and save it as PDF file.
         """
         try:
             log.info("Plotting 11-point precision recall curve...")
@@ -133,7 +133,7 @@ class Evaluator:
     def __f1_score(self):
         """
         Calculate the average F1 score for all queries using the top 10 retrieved and 
-        expected documents for each query and save the result in a CSV file.
+        expected documents for each query.
         """
         try:
             log.info("Calculating F1 Score...")
@@ -203,7 +203,7 @@ class Evaluator:
 
     def __plot_r_precision_histogram(self):
         """
-        Plot the R-Precision histogram and save it to PDF.
+        Plot the R-Precision histogram and save it as PDF file.
         """
         try:
             log.info("Plotting R-Precision Histogram...")
