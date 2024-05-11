@@ -19,21 +19,25 @@ def in_memory_retrieval(stemmer=False):
     for module in modules:
         module.run()
 
+def evaluate_results(stemmer=False):
+    sufix = "stemmer" if stemmer else "nostemmer"
+
+    Evaluator(results_file=f'./result/resultados_{sufix}.csv',
+              expected_file='./result/esperados.csv',
+              output_dir='./avalia/',
+              identifier=sufix).run()
+
 if __name__ == "__main__":
-    # log.info("Running In Memory Retrieval using PORTER STEMMER...")
-    # in_memory_retrieval(stemmer=True)
+    # Execução do sistema de recuperação de informações com e sem stemmer
+    log.info("Running In Memory Retrieval using PORTER STEMMER...")
+    in_memory_retrieval(stemmer=True)
 
-    # log.info("Running In Memory Retrieval using NO STEMMER...")
-    # in_memory_retrieval(stemmer=False)
+    log.info("Running In Memory Retrieval WITHOUT STEMMER...")
+    in_memory_retrieval(stemmer=False)
 
-    log.info("Evaluating STEMMED results...")
-    Evaluator(results_file = './result/resultados_stemmer.csv', 
-              expected_file = './result/esperados.csv', 
-              output_dir = './avalia/', 
-              identifier = 'stemmer').run()
+    # Avaliação dos resultados do sistema de IR
+    log.info("Evaluating PORTER STEMMED results...")
+    evaluate_results(stemmer=True)
 
     log.info("Evaluating NOT STEMMED results...")
-    Evaluator(results_file = './result/resultados_nostemmer.csv', 
-              expected_file = './result/esperados.csv', 
-              output_dir = './avalia/',
-              identifier = 'nostemmer').run()
+    evaluate_results(stemmer=False)
