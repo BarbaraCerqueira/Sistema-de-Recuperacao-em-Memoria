@@ -14,6 +14,7 @@ import csv
 class InvertedListGenerator:
     def __init__(self, config_file):
         self.config_file = config_file
+        self.stemmer = False
         self.input_files = []
         self.output_file = None
         self.documents = []  # Guarda o registro e abstract dos documentos lidos 
@@ -28,7 +29,9 @@ class InvertedListGenerator:
             with open(self.config_file, 'r') as file:
                 lines = file.readlines()
                 for line in lines:
-                    if line.startswith("LEIA="):
+                    if line.startswith("STEMMER"):
+                        self.stemmer = line.strip().split("=")[1].lower() == "on"
+                    elif line.startswith("LEIA="):
                         input_file = line.strip().split("=")[1]
                         self.input_files.append(input_file)
                     elif line.startswith("ESCREVA="):
@@ -81,7 +84,7 @@ class InvertedListGenerator:
         """
         log.info("Processing documents data...")
         for record, abstract in self.documents:
-            processed_abstract = normalize_text(abstract)
+            processed_abstract = normalize_text(abstract, stemmer=self.stemmer)
             self.__build_inverted_index(record, processed_abstract)
         log.info("Finished processing documents data.")
 
