@@ -68,10 +68,6 @@ class Evaluator:
                         'votes': votes
                     })
 
-                # Ordenar os documentos pelo número de votos (do maior para o menor)
-                for query in self.expected:
-                    self.expected[query] = sorted(self.expected[query], key=itemgetter('votes'), reverse=True)
-
         except FileNotFoundError:
             log.error(f"Results file not found: {self.results_file}")
             raise
@@ -240,7 +236,7 @@ class Evaluator:
 
     def __map(self):
         """
-        Calculate Mean Average Precision for all queries .
+        Calculate Mean Average Precision for all queries.
         """
         try:
             log.info("Calculating Mean Average Precision (MAP)...")
@@ -278,7 +274,7 @@ class Evaluator:
 
     def __mrr(self):
         """
-        Calculate Mean Reciprocal Rank for all queries .
+        Calculate Mean Reciprocal Rank for all queries.
         """
         try:
             log.info("Calculating Mean Reciprocal Rank (MRR)...")
@@ -311,6 +307,98 @@ class Evaluator:
         except OSError as e:
             log.error(f"Failed to find output path or save file: {e}")
 
+    def __dcg(self):
+        """
+        Calculate the average Discounted Cumulative Gain.
+        """
+        try:
+            log.info("Calculating Discounted Cumulative Gain (DCG)...")
+            dcg_values = []
+
+            for query in self.expected:
+                relevant_docs_votes = {doc['doc']: doc['votes'] for doc in self.expected[query]}
+                retrieved_docs = [result['doc'] for result in self.results[query] if result['rank'] <= self.limit]  # Considera apenas os top 10 docs
+                dcg = 0.0
+
+                # Acumula os ganhos de cada documento recuperado usando o numero de votos, descontado de acordo com seu ranking obtido
+                for i, doc in enumerate(retrieved_docs):
+                    if doc in relevant_docs_votes:
+                        raw_gain = int(relevant_docs_votes[doc])
+                    else:
+                        raw_gain = 0
+                    dcg += raw_gain / np.log2(i+1) if i != 0 else raw_gain
+
+                dcg_values.append(dcg)
+
+            # Média dos valores de dcg de todas as queries
+            dcg_score = sum(dcg_values) / len(dcg_values) if dcg_values else 0.0
+
+            # Salva o score de DCG em um arquivo CSV
+            output_file_path = os.path.join(self.output_dir, f'dcg-{self.identifier}.csv')
+            with open(output_file_path, 'w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow([f'DCG'])
+                writer.writerow([dcg_score])
+                log.info(f"Discounted Cumulative Gain saved in path: {output_file_path}")
+
+        except OSError as e:
+            log.error(f"Failed to find output path or save file: {e}")
+
+    def __normalized_dcg(self):
+        """
+        Calculate the average Normalized Discounted Cumulative Gain.
+        """
+        try:
+            log.info("Calculating Normalized Discounted Cumulative Gain (DCG)...")
+            normal_dcg_values = []
+
+            for query in self.expected:
+                relevant_docs_votes = {doc['doc']: doc['votes'] for doc in self.expected[query]}
+                sorted_expected = sorted(self.expected[query], key=itemgetter('votes'), reverse=True)
+
+                # Garantir o mesmo tamanho para o vetor de docs obtido e o ótimo, para que haja consistência
+                max_limit = min(self.limit, len(self.expected[query]))
+
+                optimal_retrieved_order = [doc['doc'] for doc in sorted_expected][:max_limit]
+                retrieved_docs = [result['doc'] for result in self.results[query] if result['rank'] <= max_limit]
+                
+                optimal_dcg = 0.0
+                dcg = 0.0
+
+                # Calculando o DCG real
+                for i, doc in enumerate(retrieved_docs):
+                    if doc in relevant_docs_votes:
+                        raw_gain = int(relevant_docs_votes[doc])
+                    else:
+                        raw_gain = 0
+                    dcg += raw_gain / np.log2(i+1) if i != 0 else raw_gain
+
+                # Calculando o DCG ótimo
+                for i, doc in enumerate(optimal_retrieved_order):
+                    if doc in relevant_docs_votes:
+                        raw_gain = int(relevant_docs_votes[doc])
+                    else:
+                        raw_gain = 0
+                    optimal_dcg += raw_gain / np.log2(i+1) if i != 0 else raw_gain
+
+                # DCG normalizado para a consulta
+                normalized_dcg = dcg / optimal_dcg
+                normal_dcg_values.append(normalized_dcg)
+
+            # Média dos valores de dcg normalizado de todas as queries
+            normal_dcg_score = sum(normal_dcg_values) / len(normal_dcg_values) if normal_dcg_values else 0.0
+
+            # Salva o score de DCG normalizado em um arquivo CSV
+            output_file_path = os.path.join(self.output_dir, f'normalized-dcg-{self.identifier}.csv')
+            with open(output_file_path, 'w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow([f'Normalized DCG'])
+                writer.writerow([normal_dcg_score])
+                log.info(f"Normalized DCG saved in path: {output_file_path}")
+
+        except OSError as e:
+            log.error(f"Failed to find output path or save file: {e}")
+
     def run(self):
         # Redefinindo ou inicializando os atributos para garantir um estado limpo
         self.results = defaultdict(list)
@@ -318,7 +406,7 @@ class Evaluator:
 
         log.info("Evaluator started.")
         os.makedirs(self.output_dir, exist_ok=True)  # Cria o diretório de saída se não existir
-        
+
         self.__read_data()
         self.__plot_11_point_precision_recall_curve()
         self.__f1_score()
@@ -327,4 +415,6 @@ class Evaluator:
         self.__plot_r_precision_histogram()
         self.__map()
         self.__mrr()
+        self.__dcg()
+        self.__normalized_dcg()
         log.info("Evaluator completed.")
